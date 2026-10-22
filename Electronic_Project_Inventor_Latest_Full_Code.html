@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Electronic Project Inventor</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#07111f;color:#eef6ff}
+header{background:linear-gradient(135deg,#07111f,#102b46);padding:28px 6%;text-align:center;border-bottom:1px solid #21415e}
+h1{margin:0;font-size:38px;color:#48d9ff}
+header p{color:#b8cce0;font-size:17px}
+.search{max-width:900px;margin:24px auto;display:flex;gap:10px}
+.search input{flex:1;padding:17px;border-radius:12px;border:1px solid #39708e;background:#0c1d30;color:white;font-size:17px;outline:none}
+button{border:0;border-radius:10px;padding:14px 20px;background:#16bde3;color:#03111b;font-weight:bold;cursor:pointer}
+button:hover{opacity:.88}
+.container{width:92%;max-width:1250px;margin:30px auto}
+.filters{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:25px}
+select{padding:12px;border-radius:9px;background:#0c1d30;color:white;border:1px solid #31546e}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin:25px 0}
+.stat{background:#0c1d30;border:1px solid #21415e;border-radius:14px;padding:20px;text-align:center}
+.stat b{display:block;font-size:27px;color:#48d9ff}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px}
+.card{background:#0c1d30;border:1px solid #234763;border-radius:15px;padding:20px;transition:.2s}
+.card:hover{transform:translateY(-4px);border-color:#48d9ff}
+.icon{font-size:35px}
+.card h3{margin:10px 0;color:#fff}
+.badge{display:inline-block;padding:5px 9px;border-radius:20px;background:#183b55;color:#7fe7ff;font-size:12px;margin:3px}
+.card p{color:#b8cce0;line-height:1.5;min-height:65px}
+.card button{width:100%;margin-top:8px}
+.empty{text-align:center;padding:50px;color:#9eb4c9}
+footer{text-align:center;padding:35px;color:#8097aa;border-top:1px solid #21415e;margin-top:40px}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:10;overflow:auto;padding:30px}
+.modalBox{max-width:850px;margin:auto;background:#0b1b2c;border:1px solid #39708e;border-radius:18px;padding:28px;position:relative}
+.close{position:absolute;right:18px;top:15px;background:#263e52;color:white;padding:8px 12px}
+.detailGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:18px 0}
+.detail{background:#10263a;padding:14px;border-radius:10px}
+.detail strong{color:#48d9ff;display:block;margin-bottom:5px}
+pre{background:#050d16;color:#bcefff;padding:18px;border-radius:10px;overflow:auto;white-space:pre-wrap}
+h2{color:#48d9ff}
+ul,ol{line-height:1.8;color:#c7d8e7}
+@media(max-width:700px){h1{font-size:28px}.stats{grid-template-columns:repeat(2,1fr)}.search{flex-direction:column}}
+</style>
+</head>
+<body>
+
+<header>
+<h1>⚡ Electronic Project Inventor</h1>
+<p>100+ Electronics Topics • Project Ideas • Components • Working • Code</p>
+<div class="search">
+<input id="searchBox" type="text" placeholder="Type electronics, Arduino, diode, IoT, ESP32, solar, PCB...">
+<button onclick="searchProjects()">🔍 Search</button>
+<button onclick="inventProject()">✨ Invent</button>
+</div>
+</header>
+
+<div class="container">
+<div class="stats">
+<div class="stat"><b id="projectCount">0</b>Projects</div>
+<div class="stat"><b>100+</b>Topics</div>
+<div class="stat"><b>3</b>Levels</div>
+<div class="stat"><b>∞</b>Ideas</div>
+</div>
+
+<div class="filters">
+<select id="categoryFilter" onchange="render()"><option value="All">All Categories</option></select>
+<select id="difficultyFilter" onchange="render()">
+<option value="All">All Difficulties</option><option>Beginner</option><option>Intermediate</option><option>Advanced</option>
+</select>
+<button onclick="randomProject()">🎲 Random Project</button>
+<button onclick="showAll()">Show All</button>
+</div>
+
+<div id="results" class="grid"></div>
+<div id="empty" class="empty" style="display:none">No matching information found. Try another electronics topic.</div>
+</div>
+
+<div id="modal" class="modal">
+<div class="modalBox">
+<button class="close" onclick="closeModal()">✕</button>
+<div id="modalContent"></div>
+</div>
+</div>
+
+<footer>
+<p>Hi my name is Vaishnav and I created this web. Welcome and thank you for visiting our website. I hope our website helped you to make your project!</p>
+<p>© 2026 Electronic Project Inventor</p>
+</footer>
+
+<script>
+const projects = [
+["Resistor","Basic Electronics","Beginner","Ω","A resistor limits current and creates voltage drops in electronic circuits.","Resistor, breadboard, multimeter","Calculate resistance using Ohm's law V = IR.","Identify resistance value. Connect in series. Measure voltage and current. Compare measured and calculated values.","Resistors are used for current limiting, voltage division, biasing and pull-up/pull-down circuits."],
+["Capacitor","Basic Electronics","Beginner","🔋","A capacitor stores electrical energy in an electric field.","Capacitor, breadboard, DC supply, multimeter","Connect the capacitor with correct polarity if it is electrolytic. Apply DC through a resistor and observe charging.","Filtering, timing, coupling and energy storage."],
+["Inductor","Basic Electronics","Intermediate","🌀","An inductor stores energy in a magnetic field and opposes changes in current.","Inductor, DC supply, switch, resistor, oscilloscope","Build a simple RL circuit. Switch the supply and observe current change.","Filters, converters, chokes and energy storage."],
+["Diode","Semiconductor Devices","Beginner","➡️","A diode mainly allows current to flow in one direction.","Diode, resistor, LED, battery, multimeter","Identify anode and cathode. Connect a resistor in series. Measure forward voltage.","Rectification, protection and switching."],
+["Zener Diode","Semiconductor Devices","Intermediate","⚡","A Zener diode can maintain an approximately constant voltage in reverse breakdown.","Zener diode, resistor, DC supply, multimeter","Connect the Zener with a series resistor and measure output voltage.","Voltage regulation and reference circuits."],
+["LED","Semiconductor Devices","Beginner","💡","An LED emits light when forward biased.","LED, 220 ohm resistor, battery or Arduino","Connect LED through a current-limiting resistor. Reverse polarity and observe the difference.","Indicators, displays and lighting."],
+["Transistor Switch","Semiconductor Devices","Beginner","🔌","A transistor can be used as an electronic switch.","NPN transistor, resistor, LED, Arduino","Drive the transistor base through a resistor and switch the LED load.","Load switching and interfacing."],
+["MOSFET Switch","Semiconductor Devices","Intermediate","🔧","A MOSFET provides efficient electronic switching for many power applications.","Logic-level MOSFET, resistor, LED/load, Arduino","Connect gate to a GPIO through a suitable arrangement and observe load switching.","Motor control, converters and power switching."],
+["Op-Amp Amplifier","Analog Electronics","Intermediate","📈","An operational amplifier can amplify and process analog signals.","Op-amp IC, resistors, breadboard, dual supply","Build a non-inverting amplifier and calculate its gain.","Signal conditioning and instrumentation."],
+["Comparator","Analog Electronics","Beginner","⚖️","A comparator compares two voltages and changes its output according to their relationship.","Comparator/op-amp, potentiometer, LED","Set a reference voltage and apply a variable input.","Level detection and sensor circuits."],
+["Rectifier","Power Electronics","Beginner","〽️","A rectifier converts AC into pulsating DC.","Diodes, transformer or low-voltage AC source, capacitor, load","Build a bridge rectifier and observe input and output using a safe low-voltage source.","AC-to-DC power supplies."],
+["Bridge Rectifier","Power Electronics","Beginner","🔲","A bridge rectifier uses four diodes for full-wave rectification.","4 diodes, AC source, capacitor, resistor load","Connect four diodes in bridge configuration and measure DC output.","Power adapters and DC supplies."],
+["Voltage Regulator","Power Electronics","Beginner","🎚️","A regulator provides a controlled DC output voltage.","7805 or suitable regulator, capacitors, DC supply","Connect input and output capacitors according to the regulator application circuit.","Stable DC power supplies."],
+["555 Timer","Digital Electronics","Beginner","⏱️","The 555 timer can operate as an oscillator or timer.","NE555, resistors, capacitors, LED","Build an astable circuit and observe LED blinking.","Timers, pulse generation and oscillators."],
+["Digital Logic AND Gate","Digital Electronics","Beginner","&","AND logic produces HIGH only when all inputs are HIGH.","Logic IC, switches, LEDs, resistors","Apply four input combinations and record the output truth table.","Digital logic and control."],
+["Digital Logic OR Gate","Digital Electronics","Beginner","≥1","OR logic produces HIGH when at least one input is HIGH.","Logic IC, switches, LEDs, resistors","Test all input combinations and verify the truth table.","Digital control systems."],
+["Digital Logic NOT Gate","Digital Electronics","Beginner","¬","NOT logic inverts a digital input.","NOT gate IC, switch, LED, resistor","Apply LOW and HIGH input and observe the opposite output.","Signal inversion."],
+["Half Adder","Digital Electronics","Beginner","➕","A half adder adds two one-bit binary inputs and produces sum and carry.","XOR gate, AND gate, switches, LEDs","Build XOR for sum and AND for carry. Test all four combinations.","Digital arithmetic circuits."],
+["Full Adder","Digital Electronics","Intermediate","➕","A full adder adds three one-bit inputs including carry-in.","XOR, AND, OR gates, LEDs, switches","Construct from two half adders and an OR gate. Verify all input combinations.","ALU and processor arithmetic."],
+["Multiplexer","Digital Electronics","Intermediate","🔀","A multiplexer selects one of several inputs and sends it to one output.","MUX IC, switches, LEDs","Change select inputs and verify which channel reaches the output.","Data selection."],
+["Counter","Digital Electronics","Intermediate","🔢","A counter changes its binary state in response to clock pulses.","Counter IC or flip-flops, clock, LEDs","Apply clock pulses and observe binary counting.","Digital clocks and frequency division."],
+["Shift Register","Digital Electronics","Intermediate","➡️","A shift register moves digital data from one flip-flop stage to another.","Shift-register IC, LEDs, clock, switches","Apply serial data and clock pulses. Observe LED shifting.","Serial communication and LED control."],
+["Arduino LED Blinker","Arduino","Beginner","🤖","A simple Arduino project that blinks an LED at a programmed interval.","Arduino Uno, LED, 220 ohm resistor","Connect LED to a digital pin through a resistor and upload the program.","Upload code, connect hardware, test ON/OFF timing.","Learning GPIO programming."],
+["Arduino Traffic Light","Arduino","Beginner","🚦","Arduino controls red, yellow and green LEDs to simulate a traffic signal.","Arduino Uno, red/yellow/green LEDs, 220 ohm resistors","Connect LEDs to three GPIO pins and program timed sequences.","Traffic signal training models."],
+["Arduino Digital Thermometer","Arduino","Beginner","🌡️","Measures temperature using a temperature sensor and displays the value.","Arduino, LM35 or compatible sensor, display/Serial Monitor","Connect sensor output to an analog input and convert voltage to temperature.","Temperature monitoring."],
+["Arduino Ultrasonic Distance Meter","Arduino","Beginner","📏","Measures distance using ultrasonic echo timing.","Arduino, HC-SR04, jumper wires","Trigger the sensor, measure echo time and calculate distance.","Parking sensors and obstacle detection."],
+["Arduino Automatic Street Light","Arduino","Beginner","🌃","Turns a light on when ambient light falls below a threshold.","Arduino, LDR, resistor, LED/lamp module","Read LDR voltage and switch the output based on a threshold.","Energy-saving lighting."],
+["Arduino Smart Fan","Arduino","Intermediate","🌀","Controls fan speed or operation according to temperature.","Arduino, temperature sensor, transistor/MOSFET, DC fan","Read temperature and control the fan using a suitable driver.","Automatic cooling."],
+["Arduino Water Level Monitor","Arduino","Beginner","💧","Detects water level and provides an indication.","Arduino, water-level sensor, LEDs/buzzer","Read sensor levels and activate indicators.","Tank monitoring."],
+["Arduino Gas Alert","Arduino","Beginner","🛡️","Detects gas sensor output and activates an alert.","Arduino, gas sensor module, buzzer, LED","Read analog sensor value and compare with a threshold.","Educational gas-alert prototype."],
+["Arduino Fire Alarm","Arduino","Beginner","🔥","Detects a flame/heat sensor signal and activates an alarm.","Arduino, flame/temperature sensor, buzzer","Read the sensor and activate the buzzer when the programmed condition occurs.","Safety demonstration."],
+["Arduino RFID Door Lock","Arduino","Intermediate","🔐","Uses RFID identification to control an electronic lock output.","Arduino, RFID reader, RFID card, relay/servo","Read card UID and compare it with an authorized value.","Access-control prototype."],
+["Arduino Servo Motor Control","Arduino","Beginner","⚙️","Controls servo position using programmed angles.","Arduino, servo motor, external supply if needed","Connect signal to a PWM-capable pin and command different angles.","Robotic mechanisms."],
+["Arduino Stepper Motor Control","Arduino","Intermediate","🔄","Controls stepper motor movement through a driver.","Arduino, stepper motor, driver module","Connect motor to driver and generate step commands.","Position control."],
+["Arduino Bluetooth Robot","Robotics","Intermediate","🤖","Controls a two-wheel robot through Bluetooth commands.","Arduino, HC-05, L298N, motors, chassis, battery","Receive commands and control motor driver direction pins.","Wireless robotics."],
+["Line Following Robot","Robotics","Beginner","🛞","Robot follows a contrasting line using IR sensors.","Arduino, IR sensors, L298N, DC motors, chassis","Read left/right sensors and adjust motor directions.","Autonomous robotics."],
+["Obstacle Avoiding Robot","Robotics","Beginner","🚧","Robot detects obstacles using ultrasonic sensing and changes direction.","Arduino, HC-SR04, L298N, motors, chassis","Measure distance and choose forward, left or right movement.","Autonomous navigation."],
+["Robotic Arm","Robotics","Intermediate","🦾","Servo motors move joints of a small robotic arm.","Arduino, 3–4 servos, arm frame, potentiometers","Map potentiometer readings to servo angles.","Pick-and-place demonstrations."],
+["ESP32 Wi-Fi Sensor","ESP32 / IoT","Intermediate","📶","ESP32 reads a sensor and provides data through Wi-Fi.","ESP32, sensor, USB cable","Read sensor values and serve or transmit the data over Wi-Fi.","IoT monitoring."],
+["ESP32 Web Server","ESP32 / IoT","Intermediate","🌐","ESP32 hosts a small webpage for controlling or monitoring GPIO.","ESP32, LED, resistor","Connect to Wi-Fi, create a web server and control an LED.","Local IoT control."],
+["IoT Smart Home","ESP32 / IoT","Intermediate","🏠","Controls lights or appliances from a network interface.","ESP32, relay module, sensors, safe low-voltage loads","Read commands and switch outputs using a driver.","Home automation prototype."],
+["MQTT Temperature Monitor","ESP32 / IoT","Advanced","☁️","Publishes sensor readings using the MQTT messaging protocol.","ESP32, temperature sensor, MQTT broker","Connect to Wi-Fi, publish readings to a topic and monitor them.","IoT telemetry."],
+["RFID Attendance System","Embedded Systems","Intermediate","🪪","Records RFID card identification as attendance data.","Arduino/ESP32, RFID reader, cards, display","Read UID and store or transmit attendance records.","Attendance prototypes."],
+["Smart Energy Meter","Embedded Systems","Advanced","⚡","Measures electrical parameters and presents energy-related data.","Microcontroller, voltage/current sensing circuits, display","Sample sensors safely, calculate electrical quantities and display results.","Energy monitoring."],
+["Solar Battery Charger","Renewable Energy","Intermediate","☀️","Charges a battery from a solar source using an appropriate charge controller.","Solar panel, charge controller, battery, protection components","Connect panel to controller and controller to battery following ratings.","Small renewable-energy systems."],
+["Solar Tracker","Renewable Energy","Intermediate","🌞","Adjusts panel orientation according to light intensity.","Arduino, LDR sensors, servo motors, panel model","Compare sensor readings and move the actuator toward stronger light.","Solar demonstration."],
+["MPPT Demonstrator","Renewable Energy","Advanced","📊","Demonstrates maximum power point tracking concepts for a PV source.","PV module, DC-DC converter, controller, sensors","Measure voltage/current and adjust converter duty ratio according to an MPPT algorithm.","PV power optimization."],
+["Battery Level Indicator","Power Electronics","Beginner","🔋","Indicates battery voltage using LEDs or a display.","Battery, resistor network, LEDs/comparator","Scale the battery voltage safely and compare against thresholds.","Battery monitoring."],
+["DC Motor Speed Control","Power Electronics","Intermediate","🎛️","Controls DC motor speed using PWM.","Arduino, MOSFET driver, DC motor, flyback diode","Generate PWM and use a suitable driver stage.","Motor drives."],
+["BLDC Motor Demonstrator","Power Electronics","Advanced","🌀","Demonstrates electronic commutation concepts for brushless DC motors.","BLDC motor, controller/driver, DC supply","Use a compatible controller and study commutation sequence.","EV and automation concepts."],
+["Buck Converter","Power Electronics","Advanced","⬇️","A buck converter reduces DC voltage using high-frequency switching.","MOSFET, diode, inductor, capacitor, controller","Build only within safe low-voltage limits and measure duty-cycle/output relationship.","DC power conversion."],
+["Boost Converter","Power Electronics","Advanced","⬆️","A boost converter raises DC voltage.","Inductor, switch, diode, capacitor, controller","Operate from a safe low-voltage source and measure output versus duty cycle.","Power conversion."],
+["Inverter Demonstrator","Power Electronics","Advanced","🔌","Converts DC to AC using controlled switching.","DC source, MOSFET bridge, controller, suitable load","Use an isolated low-voltage prototype and observe switching waveforms.","Renewable energy and drives."],
+["PCB Design Basics","PCB Design","Beginner","🟩","Introduces schematic capture, footprints, tracks and PCB manufacturing files.","KiCad, schematic, footprints","Draw schematic, assign footprints, place components, route tracks and run ERC/DRC.","PCB design workflow."],
+["KiCad LED PCB","PCB Design","Beginner","🟢","Designs a simple LED circuit PCB in KiCad.","KiCad, LED, resistor, connector","Create schematic, assign footprint, route PCB and generate Gerber files.","PCB fabrication practice."],
+["PCB Full Adder","PCB Design","Intermediate","➕","Designs a full-adder logic circuit as a PCB.","Logic gate ICs, LEDs, resistors, connectors, KiCad","Create schematic, assign DIP footprints, route and generate manufacturing files.","Digital PCB practice."],
+["UART Communication","Embedded Systems","Intermediate","🔗","Transfers serial data between microcontrollers or devices.","Arduino/ESP32, USB-UART or second controller","Configure baud rate and transmit test messages.","Embedded communication."],
+["I2C Sensor Interface","Embedded Systems","Intermediate","🔗","Connects multiple devices over the I2C bus.","Arduino/ESP32, I2C sensor/display","Connect SDA/SCL with suitable pull-ups and read sensor data.","Sensor interfacing."],
+["SPI Display Interface","Embedded Systems","Intermediate","🖥️","Uses SPI to communicate with a display module.","Arduino/ESP32, SPI display","Connect clock, MOSI and control lines and display test data.","Fast peripheral communication."],
+["CAN Bus Demonstrator","Embedded Systems","Advanced","🚗","Demonstrates message-based communication commonly used in vehicles.","CAN controllers/transceivers, microcontrollers, CAN bus wiring","Configure nodes and exchange CAN frames using suitable hardware.","Automotive electronics."],
+["IR Remote Control","Embedded Systems","Beginner","📺","Receives infrared remote commands and maps them to actions.","Arduino, IR receiver, remote, LED","Decode remote buttons and control outputs.","Consumer electronics learning."],
+["Digital Voltmeter","Measurement","Intermediate","📟","Measures a safe low-voltage DC signal using an ADC.","Arduino, voltage divider, display","Scale input voltage within ADC limits and calculate the original value.","Instrumentation."],
+["Digital Ammeter","Measurement","Intermediate","🔌","Measures current using a suitable current sensor.","Arduino, current sensor, display","Read sensor output and convert it using the sensor specification.","Current monitoring."],
+["LDR Light Meter","Sensors","Beginner","☀️","Measures relative light intensity using an LDR.","LDR, resistor, Arduino, display","Build a voltage divider and map ADC values to light level.","Lighting control."],
+["PIR Motion Detector","Sensors","Beginner","👁️","Detects motion using a PIR sensor module.","Arduino, PIR sensor, LED/buzzer","Read digital sensor output and trigger an indicator.","Security and automation."],
+["Ultrasonic Parking Sensor","Sensors","Beginner","🚗","Measures distance and warns when an object is close.","HC-SR04, Arduino, buzzer, LEDs","Calculate distance and vary warning behavior by range.","Parking assistance."],
+["Soil Moisture Monitor","Sensors","Beginner","🌱","Measures soil moisture and provides a dry/wet indication.","Moisture sensor, Arduino, LEDs","Read sensor value and set threshold indicators.","Agriculture prototypes."],
+["Rain Detector","Sensors","Beginner","🌧️","Detects water on a rain sensor plate.","Rain sensor, Arduino, buzzer, LED","Read sensor output and activate an alert.","Weather monitoring."],
+["Tilt Alarm","Sensors","Beginner","⚠️","Detects orientation changes using a tilt sensor.","Tilt switch, Arduino, buzzer","Read switch state and trigger an alarm.","Anti-tamper demonstrations."],
+["Accelerometer Monitor","Sensors","Intermediate","📐","Reads acceleration values from a 3-axis accelerometer.","Arduino/ESP32, MPU6050 or similar","Read X/Y/Z values through I2C and display them.","Motion sensing."],
+["Gyroscope Monitor","Sensors","Intermediate","🧭","Measures angular velocity using a gyroscope.","ESP32/Arduino, IMU sensor","Read gyroscope data and display axis values.","Robotics and stabilization."],
+["OLED Information Display","Displays","Beginner","🖥️","Displays sensor values or messages on an OLED screen.","Arduino/ESP32, I2C OLED","Initialize display and write text/data.","Portable instruments."],
+["7-Segment Counter","Displays","Beginner","🔢","Displays a changing numerical count on a 7-segment display.","7-segment display, resistors, Arduino","Control segments directly or through a driver and increment count.","Digital display learning."],
+["LCD Temperature Display","Displays","Beginner","🌡️","Shows temperature readings on a character LCD.","Arduino, temperature sensor, 16x2 LCD","Read sensor and print the result to the LCD.","Instrumentation."],
+["Bluetooth Sensor Monitor","Wireless","Intermediate","📱","Sends sensor readings from a microcontroller to a Bluetooth device.","Arduino, HC-05, sensor","Read sensor data and transmit serial values.","Wireless monitoring."],
+["Wi-Fi Weather Station","Wireless","Intermediate","🌦️","Collects environmental data and displays it locally or online.","ESP32, temperature/humidity sensor, display","Read environmental data and publish or display it.","IoT weather monitoring."],
+["LoRa Sensor Node","Wireless","Advanced","📡","Sends sensor readings over a long-range LoRa link.","LoRa modules, Arduino/ESP32, sensor","Configure transmitter and receiver with matching radio parameters.","Long-range IoT."],
+["Zigbee Home Sensor","Wireless","Advanced","🏠","Demonstrates low-power mesh communication concepts.","Zigbee modules, microcontrollers, sensors","Configure nodes and transmit sensor messages.","Home automation."],
+["NFC Information Tag","Wireless","Intermediate","📲","Reads or writes short information using NFC.","NFC module/tag, microcontroller","Interface the reader and exchange tag data.","Identification and smart objects."],
+["Voice Controlled LED","Human Interface","Intermediate","🎤","Controls an LED using recognized voice commands through a suitable voice interface.","Microcontroller, voice-recognition interface, LED","Map recognized commands to GPIO outputs.","Human-machine interaction."],
+["Touch Sensor Lamp","Human Interface","Beginner","☝️","Turns a light on or off using capacitive touch.","Touch sensor module, Arduino, LED","Read touch state and toggle output.","Touch interfaces."],
+["Keypad Password Lock","Security","Intermediate","🔐","Uses a keypad to enter a password and control an output.","4x4 keypad, Arduino, servo/relay, display","Scan keypad, compare password and activate output.","Access-control learning."],
+["Electronic Dice","Digital Electronics","Beginner","🎲","Generates a random number from 1 to 6 and displays it.","Arduino, push button, LEDs or 7-segment","Detect button press and generate/display a number.","Digital electronics project."],
+["Electronic Voting Demo","Digital Electronics","Intermediate","🗳️","Counts selections from multiple push buttons.","Arduino, push buttons, LCD","Debounce inputs and update candidate counts.","Embedded input and display."],
+["Digital Stopwatch","Embedded Systems","Beginner","⏱️","Measures elapsed time using a microcontroller.","Arduino, buttons, display","Implement start, stop and reset functions.","Timing applications."],
+["Mini Frequency Meter","Measurement","Advanced","📈","Estimates frequency by measuring pulse timing.","Microcontroller, signal source, display","Count pulses or measure periods within safe signal limits.","Instrumentation."],
+["Signal Generator Demo","Analog Electronics","Advanced","〰️","Generates simple waveforms using a microcontroller or DAC module.","Microcontroller, DAC/PWM filter, oscilloscope","Generate a controlled waveform and observe it on an oscilloscope.","Testing and instrumentation."],
+["Audio Level Indicator","Analog Electronics","Intermediate","🔊","Converts sound amplitude into an LED level display.","Microphone module, Arduino, LEDs","Sample microphone output and map amplitude to LED levels.","Audio electronics."],
+["Electronic Metronome","Embedded Systems","Beginner","🥁","Produces periodic audio beats at an adjustable tempo.","Arduino, buzzer, buttons, display","Calculate beat interval from BPM and generate tones.","Music electronics."],
+["Smart Doorbell","IoT","Beginner","🔔","Creates a connected or local doorbell with an indicator.","ESP32/Arduino, push button, buzzer, LED","Detect button press and trigger sound/notification interface.","Home automation."],
+["Smart Dustbin","Robotics","Intermediate","🗑️","Opens a lid automatically when a person approaches.","Arduino, ultrasonic sensor, servo","Measure distance and command servo movement.","Automation."],
+["Automatic Plant Watering","IoT","Intermediate","🌱","Activates a small pump when soil becomes dry.","Arduino/ESP32, moisture sensor, pump driver","Read moisture and control a low-voltage pump through a driver.","Smart agriculture."],
+["Smart Irrigation Controller","IoT","Advanced","💧","Combines soil moisture and scheduling for irrigation control.","ESP32, moisture sensor, relay/driver, pump","Use threshold and schedule logic while monitoring water use.","Agriculture automation."],
+["Home Energy Dashboard","IoT","Advanced","📊","Displays electrical measurements on a web dashboard.","ESP32, suitable voltage/current sensors, web UI","Collect readings and update a local dashboard.","Energy awareness."],
+["EV Battery Monitor","Electric Vehicle","Advanced","🚙","Monitors battery voltage, temperature and selected status parameters.","Microcontroller, sensors, display","Measure within rated ranges and display battery status.","EV education."],
+["EV Charging Indicator","Electric Vehicle","Intermediate","🔌","Displays charging-state information for a low-voltage educational setup.","Microcontroller, LEDs/display, safe test supply","Read the defined test-state signals and indicate status.","EV training."],
+["Regenerative Braking Demo","Electric Vehicle","Advanced","♻️","Demonstrates energy recovery using a motor-generator setup.","DC motor/generator, controller, battery/supercapacitor, sensors","Run a controlled low-voltage experiment and observe energy flow.","EV concepts."],
+["Solar Phone Charger","Renewable Energy","Intermediate","📱","Uses a solar panel and charge-management circuit for USB-level charging.","Solar panel, charge controller, regulated USB output","Use a proper charge controller and regulated output stage.","Portable renewable energy."],
+["Emergency Light","Power Electronics","Beginner","🔦","Automatically switches to a battery-powered light when supply is unavailable.","LEDs, battery, charger/controller, switch circuit","Build a safe low-voltage changeover circuit.","Backup lighting."],
+["Battery Charging Indicator","Power Electronics","Beginner","🔋","Shows charging status using LEDs.","Battery charger module, LEDs, resistors","Use the charger's status outputs or a safe sensing circuit.","Battery systems."],
+["Thermostatic Fan Controller","Sensors","Intermediate","🌡️","Turns a fan on when temperature exceeds a threshold.","Temperature sensor, Arduino, MOSFET/driver, fan","Read temperature and control fan with hysteresis.","Cooling systems."],
+["Electronic Fuse Demo","Power Electronics","Advanced","🛡️","Demonstrates over-current protection using current sensing and switching.","Current sensor, controller, MOSFET, low-voltage load","Detect excessive current and disconnect the load.","Power protection education."],
+["Overvoltage Protection Demo","Power Electronics","Advanced","⚡","Disconnects a low-voltage load when input exceeds a defined threshold.","Comparator/controller, MOSFET/relay, voltage sensing","Scale voltage safely and switch off when threshold is exceeded.","Circuit protection."],
+["Solar Battery Monitor","Renewable Energy","Intermediate","☀️","Displays solar-battery voltage and charging information.","Solar panel, battery, microcontroller, display","Measure voltages within ADC limits and display status.","Renewable-energy monitoring."],
+["Mini Home Automation Panel","IoT","Intermediate","🏠","Controls several low-voltage loads from a central interface.","ESP32, buttons, LEDs/low-voltage loads","Create control screens and map controls to GPIO.","Automation training."],
+["Electronic Component Tester","Measurement","Advanced","🧪","Identifies selected component characteristics using measurement techniques.","Microcontroller, resistor network, display, test sockets","Measure safe low-voltage responses and estimate values.","Electronics laboratory learning."],
+["Resistor Color Code Calculator","Basic Electronics","Beginner","🎨","Converts resistor color bands into resistance values.","HTML/JavaScript website","Select band colors and calculate resistance and tolerance.","Electronics education."],
+["Ohm's Law Calculator","Basic Electronics","Beginner","Ω","Calculates voltage, current or resistance using Ohm's law.","Web browser","Enter two known quantities and calculate the third.","Learning and quick calculations."],
+["LED Resistor Calculator","Basic Electronics","Beginner","💡","Calculates a suitable LED series resistance from supply and LED voltage.","Web browser","Enter supply voltage, LED voltage and desired current.","LED circuit design."],
+["RC Time Constant Calculator","Analog Electronics","Beginner","⏳","Calculates RC time constant τ = RC.","Web browser","Enter resistance and capacitance and calculate time constant.","Timing and filter design."],
+["Voltage Divider Calculator","Basic Electronics","Beginner","➗","Calculates output voltage from a resistor divider.","Web browser","Enter Vin and resistor values to calculate Vout.","Sensor interfaces and references."],
+["PCB Trace Planning Guide","PCB Design","Intermediate","🟩","Provides educational guidance for planning PCB traces and clearances.","KiCad, PCB design rules","Set design rules, route signals, check DRC and prepare fabrication files.","PCB development."],
+["Gerber File Generator Guide","PCB Design","Intermediate","📦","Explains the manufacturing output files needed for PCB fabrication.","KiCad","Complete schematic and PCB, then generate Gerber and drill outputs.","PCB manufacturing."],
+["Arduino Soil Temperature Logger","Arduino","Intermediate","🌱","Logs temperature and soil measurements over time.","Arduino, sensors, storage module","Sample sensors at intervals and save readings.","Agricultural data logging."],
+["ESP32 Bluetooth Controller","ESP32 / IoT","Intermediate","📲","Controls outputs from a phone or Bluetooth terminal.","ESP32, LED/servo, Bluetooth connection","Receive commands and map them to outputs.","Wireless control."],
+["ESP32 OLED Clock","ESP32 / IoT","Beginner","🕐","Displays time and status information on an OLED.","ESP32, OLED display","Maintain time using a suitable clock/time source and update display.","Embedded display."],
+["Smart Parking Indicator","IoT","Intermediate","🅿️","Detects parking-space occupancy and indicates availability.","ESP32, ultrasonic sensors, LEDs","Measure each parking position and update indicators.","Smart-city prototype."],
+["Mini Weather Dashboard","IoT","Intermediate","🌤️","Displays temperature, humidity and pressure on a web page.","ESP32, environmental sensor","Read sensors and update a local webpage.","IoT dashboard."],
+["Electronic Queue Display","Embedded Systems","Beginner","🔢","Displays a queue number and provides a button interface.","Arduino, 7-segment/LCD, push buttons","Increment number and display current token.","Public-service prototype."],
+["Digital Notice Board","IoT","Intermediate","📢","Displays messages received through a local wireless interface.","ESP32, OLED/LCD","Receive and display text messages.","Institutional information systems."],
+["Smart Classroom Bell","Embedded Systems","Intermediate","🔔","Generates scheduled bell events for a model classroom.","Arduino/ESP32, RTC, buzzer","Store schedule and trigger the buzzer at selected times.","Automation."],
+["Electronic Lab Safety Monitor","IoT","Advanced","🛡️","Monitors selected environmental/safety parameters in a laboratory model.","ESP32, temperature/smoke/door sensors","Read sensors and show status with alerts.","Educational safety monitoring."],
+["Portable USB Power Monitor","Measurement","Intermediate","🔌","Displays voltage/current information for a low-voltage USB test setup.","Current/voltage sensor, microcontroller, OLED","Measure safely and display readings.","Power measurement."],
+["Digital Logic Trainer","Digital Electronics","Intermediate","🎓","A reusable board for experimenting with logic gates and truth tables.","Logic ICs, switches, LEDs, regulated supply","Provide inputs and observe gate outputs.","Teaching digital electronics."],
+["Sensor Test Bench","Measurement","Intermediate","🧰","Provides a microcontroller platform for testing multiple sensors.","Arduino/ESP32, sensor connectors, display","Read each sensor and display raw/calibrated values.","Electronics laboratory."],
+["IoT Relay Control Panel","IoT","Intermediate","🔌","Controls low-voltage loads through an ESP32 web interface.","ESP32, relay/driver, low-voltage loads","Create a local web page and switch outputs.","IoT control."],
+["Electronic Dice Web Simulator","Digital Electronics","Beginner","🎲","Simulates electronic dice in a browser using JavaScript.","HTML, CSS, JavaScript","Press Roll and generate a random value from 1 to 6.","Digital learning."],
+["Electronics Quiz App","Education","Beginner","🧠","Interactive quiz covering components, circuits and embedded systems.","HTML, CSS, JavaScript","Answer questions and calculate score.","Student learning."],
+["Electronics Project Cost Calculator","Education","Beginner","💰","Estimates project cost from selected components.","HTML, CSS, JavaScript","Select components and quantities and calculate total.","Project planning."],
+["Electronics Study Dashboard","Education","Beginner","📚","Provides searchable electronics concepts, formulas and project ideas.","HTML, CSS, JavaScript","Search topics and open information cards.","Self-learning."],
+["Ohm's Law Practice Tool","Education","Beginner","📝","Generates practice questions based on voltage, current and resistance.","HTML, CSS, JavaScript","Generate a question, enter answer and check it.","Student practice."],
+["Binary Number Converter","Digital Electronics","Beginner","🔢","Converts decimal, binary and hexadecimal values.","HTML, CSS, JavaScript","Enter a number and display equivalent representations.","Digital electronics learning."],
+["Unit Converter for Electronics","Education","Beginner","📐","Converts common electronics units such as V, mV, A, mA, Ω and kΩ.","HTML, CSS, JavaScript","Enter value and select source/target units.","Quick calculations."],
+["PWM Demonstrator","Embedded Systems","Intermediate","〰️","Demonstrates how PWM duty cycle affects an output.","Arduino or browser simulation","Change duty cycle and observe calculated average behavior.","Motor/LED control learning."],
+["ADC Demonstrator","Embedded Systems","Intermediate","📊","Explains conversion of analog voltage into digital ADC counts.","Microcontroller or browser simulation","Enter reference voltage and ADC resolution and calculate counts.","Embedded systems learning."],
+["Electronics Formula Library","Education","Beginner","📘","Collects common formulas for electronics and electrical engineering.","HTML, CSS, JavaScript","Search a formula category and view its equation and variables.","Reference tool."]
+];
+
+// Price reference catalogue checked against Indian online component listings on 20 Oct 2026.
+// Prices below are listing prices, not guaranteed checkout prices. Where the component text
+// is generic, the selected item is explicitly described as a reference part.
+const componentRules = [
+ {re:/^\s*microcontroller\s*\(\s*arduino\s*\/\s*esp32\s*\)\s*$/i,name:'Controller choice — Arduino or ESP32 must be selected',unit:null,unitLabel:'',source:'Select one exact board',url:'https://componentwala.com/',note:'Arduino and ESP32 are alternatives, not one component.'},
+ {re:/\b(arduino\s*uno\s*r3|arduino\s*uno)\b/i,name:'UNO R3 SMD compatible board (reference)',unit:272,unitLabel:'1 board',source:'ComponentWala catalogue',url:'https://componentwala.com/',note:'Compatible SMD board; original Arduino board costs more.'},
+ {re:/\b(esp32|esp-32)\b/i,name:'ESP32 Wi-Fi/Bluetooth development board',unit:383,unitLabel:'1 board',source:'ComponentWala catalogue',url:'https://componentwala.com/'},
+ {re:/\b(nodemcu|esp8266)\b/i,name:'NodeMCU ESP8266 development board',unit:244,unitLabel:'1 board',source:'ComponentWala catalogue',url:'https://componentwala.com/'},
+ {re:/\barduino\s*nano\b/i,name:'Arduino Nano-compatible board',unit:300,unitLabel:'1 board',source:'Reference price; exact listing not verified',url:'https://componentwala.com/',uncertain:true},
+ {re:/\b(hc[- ]?sr04|ultrasonic sensor)\b/i,name:'HC-SR04 ultrasonic sensor module',unit:65,unitLabel:'1 module',source:'ComponentWala catalogue',url:'https://componentwala.com/'},
+ {re:/\bdht11\b/i,name:'DHT11 temperature/humidity module',unit:55,unitLabel:'1 module',source:'ComponentWala catalogue',url:'https://componentwala.com/'},
+ {re:/\bdht22\b/i,name:'DHT22 temperature/humidity module',unit:125,unitLabel:'1 module',source:'ComponentWala catalogue',url:'https://componentwala.com/'},
+ {re:/\bacs712\b/i,name:'ACS712 current sensor module',unit:78,unitLabel:'1 module',source:'ComponentWala catalogue',url:'https://componentwala.com/'},
+ {re:/\bzmpt101b\b/i,name:'ZMPT101B AC voltage sensor module',unit:119,unitLabel:'1 module',source:'ComponentWala catalogue',url:'https://componentwala.com/'},
+ {re:/\b(sg90|servo motor|servo)\b/i,name:'SG90 micro servo motor (reference)',unit:180,unitLabel:'1 motor',source:'Marketplace listing reference',url:'https://www.amazon.in/',uncertain:true},
+ {re:/\b(5mm\s*)?(red|green|blue|white)?\s*led\b|\blight emitting diode\b/i,name:'5 mm LED (pack price divided by 10)',unit:1.5,unitLabel:'1 LED',source:'StemVolt: pack of 10 for ₹15',url:'https://stemvolt.in/product-category/electronic-components/leds-and-lights/'},
+ {re:/\b(resistor|resistance|resistor network)\b/i,name:'1/4 W resistor (reference value; 5-pack price divided by 5)',unit:1.8,unitLabel:'1 resistor',source:'StemVolt: common 5-packs ₹9',url:'https://stemvolt.in/product-category/electronic-components/resistors-and-diodes/',uncertain:true,note:'Exact resistance and wattage can change the listing price.'},
+ {re:/\bzener\b/i,name:'12 V Zener diode (pack price divided by 5)',unit:1.8,unitLabel:'1 diode',source:'StemVolt: 5-pack for ₹9',url:'https://stemvolt.in/product-category/electronic-components/resistors-and-diodes/',uncertain:true,note:'Exact Zener voltage and wattage must be checked.'},
+ {re:/\b(1n4007|diode)\b/i,name:'1N4007 diode (pack price divided by 5)',unit:1.8,unitLabel:'1 diode',source:'StemVolt: 5-pack for ₹9',url:'https://stemvolt.in/product-category/electronic-components/resistors-and-diodes/',uncertain:true,note:'Only a reference for a general-purpose 1N4007; Zener/Schottky/fast diodes differ.'},
+ {re:/\b(2n2222|bc547|small npn transistor|transistor)\b/i,name:'2N2222 NPN transistor (pack price divided by 5)',unit:1.8,unitLabel:'1 transistor',source:'StemVolt: 5-pack for ₹9',url:'https://stemvolt.in/product-category/electronic-components/ics-and-transistors/',uncertain:true,note:'Use only if a 2N2222 is suitable; transistor type matters.'},
+ {re:/\b(mb102|830 point|breadboard)\b/i,name:'MB102 830-point breadboard',unit:76,unitLabel:'1 board',source:'StemVolt listing',url:'https://stemvolt.in/product/mb102-breadboard-830-points/',uncertain:true,note:'Assumes an 830-point board; mini breadboards cost less.'},
+ {re:/\b(jumper wires|jumper wire|connecting wires|wire kit)\b/i,name:'Breadboard jumper wire kit (140-piece pack)',unit:150,unitLabel:'1 pack',source:'StemVolt listing',url:'https://stemvolt.in/product-category/electronic-components/breadboards-and-pcbs/',uncertain:true,note:'Counts one kit, not one loose wire.'},
+ {re:/\b(1000\s*µ?f|1000uf)\b/i,name:'1000 µF capacitor (pack price divided by 2)',unit:4.5,unitLabel:'1 capacitor',source:'StemVolt: pack of 2 for ₹9',url:'https://stemvolt.in/product-category/electronic-components/'},
+ {re:/\b(100\s*µ?f|100uf)\b/i,name:'100 µF capacitor (pack price divided by 5)',unit:1.8,unitLabel:'1 capacitor',source:'StemVolt: pack of 5 for ₹9',url:'https://stemvolt.in/product-category/electronic-components/'},
+ {re:/\b(capacitor|electrolytic|ceramic cap)\b/i,name:'Capacitor — exact capacitance/voltage required',unit:null,unitLabel:'',source:'Find exact value',url:'https://stemvolt.in/product-category/electronic-components/',note:'Select the capacitance and voltage rating before pricing.'},
+ {re:/\b(10k|10\s*k|potentiometer|variable resistor)\b/i,name:'10 kΩ potentiometer (reference)',unit:15,unitLabel:'1 potentiometer',source:'StemVolt listing',url:'https://stemvolt.in/product-category/electronic-components/',uncertain:true},
+ {re:/\b(555 timer|ne555|555)\b/i,name:'NE555 timer IC — exact seller price required',unit:null,unitLabel:'',source:'Find exact listing',url:'https://stemvolt.in/product-category/electronic-components/ics-and-transistors/',note:'No exact current listing price was verified for this part.'},
+ {re:/\b(7805|voltage regulator)\b/i,name:'Voltage regulator — exact part required',unit:null,unitLabel:'',source:'Find exact listing',url:'https://stemvolt.in/product-category/electronic-components/ics-and-transistors/',note:'7805, adjustable and switching regulators have different prices.'},
+ {re:/\b(op[- ]?amp|lm358|operational amplifier)\b/i,name:'Op-amp IC — exact part required',unit:null,unitLabel:'',source:'Find exact listing',url:'https://stemvolt.in/product-category/electronic-components/ics-and-transistors/'},
+ {re:/\b(mosfet)\b/i,name:'MOSFET — exact part number required',unit:null,unitLabel:'',source:'Find exact listing',url:'https://stemvolt.in/product-category/electronic-components/ics-and-transistors/'},
+ {re:/\b(relay)\b/i,name:'Relay — coil voltage/contact rating required',unit:null,unitLabel:'',source:'Find exact listing',url:'https://stemvolt.in/product-category/electronic-components/'},
+ {re:/\b(lcd|oled|display)\b/i,name:'Display — size/interface required',unit:null,unitLabel:'',source:'Find exact listing',url:'https://componentwala.com/'},
+ {re:/\b(motor driver|l298n|l293d|driver module)\b/i,name:'Motor driver — exact module required',unit:null,unitLabel:'',source:'Find exact listing',url:'https://componentwala.com/'},
+ {re:/\b(dc motor|motor)\b/i,name:'Motor — voltage/RPM/torque required',unit:null,unitLabel:'',source:'Find exact listing',url:'https://componentwala.com/'},
+ {re:/\b(ldr|photoresistor|light dependent resistor)\b/i,name:'LDR — exact listing required',unit:null,unitLabel:'',source:'Find exact listing',url:'https://stemvolt.in/product-category/electronic-components/'},
+ {re:/\b(sensor)\b/i,name:'Sensor — exact model required',unit:null,unitLabel:'',source:'Select model',url:'https://componentwala.com/',note:'A generic “sensor” is not a purchasable exact part.'},
+ {re:/\b(push ?button|switch)\b/i,name:'Push button/switch — type required',unit:null,unitLabel:'',source:'Find exact listing',url:'https://stemvolt.in/product-category/electronic-components/'},
+ {re:/\b(battery|9v|power supply|regulated supply|ac source)\b/i,name:'Power source — voltage/current/type required',unit:null,unitLabel:'',source:'Select exact power source',url:'https://componentwala.com/'},
+ {re:/\b(multimeter|oscilloscope|soldering iron|computer|laptop|html|css|javascript|browser simulation|software)\b/i,name:'Reusable tool/software (excluded from parts total)',unit:0,unitLabel:'',source:'Not a consumable build component',url:'',reusable:true},
+ {re:/\b(transformer)\b/i,name:'Transformer — voltage/current rating required',unit:null,unitLabel:'',source:'Find exact listing',url:'https://componentwala.com/'},
+ {re:/\b(pcb|printed circuit board)\b/i,name:'PCB — size/type/fabrication required',unit:null,unitLabel:'',source:'Find exact listing',url:'https://stemvolt.in/product-category/electronic-components/breadboards-and-pcbs/'},
+ {re:/\b(solar panel)\b/i,name:'Solar panel — wattage/voltage required',unit:null,unitLabel:'',source:'Find exact listing',url:'https://stemvolt.in/product-category/electronic-components/'},
+ {re:/\b(buzzer|speaker)\b/i,name:'Buzzer/speaker — type and rating required',unit:null,unitLabel:'',source:'Find exact listing',url:'https://stemvolt.in/product-category/electronic-components/'},
+ {re:/\b(fan)\b/i,name:'Fan — voltage/size required',unit:null,unitLabel:'',source:'Find exact listing',url:'https://componentwala.com/'},
+ {re:/\b(usb cable|usb)\b/i,name:'USB cable for UNO board',unit:30,unitLabel:'1 cable',source:'ComponentWala catalogue',url:'https://componentwala.com/'},
+ {re:/\b(microcontroller|controller board)\b/i,name:'Controller board — select exact board',unit:null,unitLabel:'',source:'Select board',url:'https://componentwala.com/',note:'Arduino, ESP32 and other boards have different prices.'},
+ {re:/\b(module)\b/i,name:'Module — exact model required',unit:null,unitLabel:'',source:'Select model',url:'https://componentwala.com/'}
+];
+function componentEstimate(label){
+ const s=String(label||'').trim(); if(!s) return null;
+ const qtyMatch=s.match(/^\s*(\d+)\s*(?:x\s*)?(.+)$/i);
+ const qty=qtyMatch ? Math.max(1,Number(qtyMatch[1])) : 1;
+ const itemText=qtyMatch ? qtyMatch[2].trim() : s;
+ const normalized=itemText.replace(/\bdiodes\b/ig,'diode').replace(/\bresistors\b/ig,'resistor').replace(/\bleds\b/ig,'led').replace(/\bcapacitors\b/ig,'capacitor').replace(/\bsensors\b/ig,'sensor').replace(/\bmotors\b/ig,'motor').replace(/\bwires\b/ig,'wire').replace(/\bswitches\b/ig,'switch').replace(/\bbuttons\b/ig,'button');
+ const rule=componentRules.find(r=>r.re.test(normalized));
+ if(!rule) return {label:s,displayName:s,unit:null,low:null,high:null,known:false,quantity:qty,reason:'No verified matching price. Choose an exact component/model.'};
+ const known=Number.isFinite(rule.unit);
+ return {label:s,displayName:rule.name,unit:known?rule.unit:null,low:known?rule.unit*qty:null,high:known?rule.unit*qty:null,known,uncertain:!!rule.uncertain,reusable:!!rule.reusable,quantity:qty,source:rule.source,url:rule.url,note:rule.note||'',reason:rule.note||'Exact current price not verified.'};
+}
+function priceBreakdown(components){
+ const items=String(components||'').split(',').map(x=>x.trim()).filter(Boolean).map(componentEstimate).filter(Boolean);
+ const priced=items.filter(x=>x.known&&!x.reusable);
+ const total=priced.reduce((n,x)=>n+x.low,0);
+ return {items,total,unknown:items.filter(x=>!x.known),complete:items.length>0&&items.every(x=>x.known),pricedCount:priced.length};
+}
+function formatINR(n){return '₹'+Number(n).toLocaleString('en-IN',{maximumFractionDigits:2});}
+function estimateCost(components){
+ const b=priceBreakdown(components);
+ if(!b.items.length||!b.pricedCount) return 'Exact components needed before costing';
+ return `Known-item subtotal: ${formatINR(b.total)}${b.unknown.length?` + ${b.unknown.length} item(s) need exact details`:' (listed reference prices)'}`;
+}
+
+let data = projects.map((p,i)=>({
+id:i+1,name:p[0],category:p[1],difficulty:p[2],icon:p[3],
+description:p[4],components:p[5],working:p[6],steps:p[7],applications:p[8],
+cost:estimateCost(p[5])
+}));
+
+function init(){
+ const cats=[...new Set(data.map(x=>x.category))].sort();
+ const select=document.getElementById("categoryFilter");
+ cats.forEach(c=>{let o=document.createElement("option");o.value=c;o.textContent=c;select.appendChild(o)});
+ document.getElementById("projectCount").textContent=data.length+"+";
+ render();
+}
+function render(){
+ const q=document.getElementById("searchBox").value.toLowerCase().trim();
+ const cat=document.getElementById("categoryFilter").value;
+ const diff=document.getElementById("difficultyFilter").value;
+ const results=data.filter(p=>{
+   const text=(p.name+" "+p.category+" "+p.description+" "+p.components+" "+p.applications).toLowerCase();
+   return (!q||text.includes(q))&&(cat==="All"||p.category===cat)&&(diff==="All"||p.difficulty===diff);
+ });
+ const box=document.getElementById("results");
+ box.innerHTML="";
+ results.forEach(p=>{
+   const card=document.createElement("div");
+   card.className="card";
+   card.innerHTML=`<div class="icon">${p.icon}</div>
+   <h3>${p.name}</h3>
+   <span class="badge">${p.category}</span><span class="badge">${p.difficulty}</span>
+   <p>${p.description}</p>
+   <button onclick="openProject(${p.id})">View Information</button>`;
+   box.appendChild(card);
+ });
+ document.getElementById("empty").style.display=results.length?"none":"block";
+}
+function searchProjects(){render();document.querySelector(".container").scrollIntoView({behavior:"smooth"});}
+function showAll(){document.getElementById("searchBox").value="";document.getElementById("categoryFilter").value="All";document.getElementById("difficultyFilter").value="All";render();}
+function randomProject(){openProject(data[Math.floor(Math.random()*data.length)].id);}
+function inventProject(){
+ const q=document.getElementById("searchBox").value.trim();
+ if(!q){alert("Type a requirement first. Example: IoT project for agriculture");return;}
+ const query = q.toLowerCase();
+ let found=data.filter(p=>p.name.toLowerCase()===query || p.name.toLowerCase().includes(query) || p.category.toLowerCase()===query);
+ if(found.length){openProject(found[0].id);return;}
+ const safe=q.replace(/[<>]/g,"");
+ const invented={
+ id:99999,name:"Invented Project: "+safe,category:"Project Inventor",difficulty:"Custom",icon:"✨",
+ description:"This is an educational project concept generated from your requirement: "+safe+".",
+ components:"Microcontroller (Arduino/ESP32), suitable sensors, driver circuit, display or communication module, regulated power supply and required passive components.",
+ working:"Define the input, process the signal with a controller, make the required decision, drive the output and monitor the result.",
+ steps:"1. Define the objective. 2. Select sensors and controller. 3. Draw the block diagram. 4. Build a low-voltage prototype. 5. Write and test the program. 6. Validate the output. 7. Document the final design.",
+ applications:"Can be adapted for academic projects, automation, IoT, measurement, robotics or control applications.",
+ cost:"Exact components needed before costing"
+ };
+ openCustom(invented);
+}
+function escapeHTML(value){
+ return String(value ?? "").replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+}
+function renderCostBreakdown(components){
+ const b=priceBreakdown(components);
+ if(!b.items.length) return '<p>No component list available. Add exact components and quantities to calculate the cost.</p>';
+ const rows=b.items.map(item=>{
+  let price;
+  if(item.reusable) price='Reusable tool/software — excluded from build parts total';
+  else if(!item.known) price='Price unavailable until exact model/value is selected';
+  else price=`${formatINR(item.unit)} each × ${item.quantity} = <strong>${formatINR(item.low)}</strong>${item.uncertain?' <em>(reference part; verify exact model)</em>':''}`;
+  const source=item.url?`<a href="${escapeHTML(item.url)}" target="_blank" rel="noopener noreferrer">${escapeHTML(item.source||'Check listing')}</a>`:escapeHTML(item.source||'—');
+  const note=item.note?`<div style="font-size:12px;color:#9eb4c9;margin-top:4px">${escapeHTML(item.note)}</div>`:'';
+  return `<tr><td style="padding:10px;border-bottom:1px solid #31546e">${escapeHTML(item.displayName)}${note}</td><td style="padding:10px;border-bottom:1px solid #31546e">${price}</td><td style="padding:10px;border-bottom:1px solid #31546e">${source}</td></tr>`;
+ }).join('');
+ return `<h3>💰 Component-wise Price List</h3>
+ <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;background:#10263a"><thead><tr><th style="text-align:left;padding:10px;border-bottom:1px solid #31546e">Component</th><th style="text-align:left;padding:10px;border-bottom:1px solid #31546e">Price calculation</th><th style="text-align:left;padding:10px;border-bottom:1px solid #31546e">Price source</th></tr></thead><tbody>${rows}</tbody></table></div>
+ <p><strong>Subtotal of priced parts: ${formatINR(b.total)}</strong></p>
+ ${b.unknown.length?`<p style="color:#ffd27a"><strong>Project total is incomplete.</strong> Exact prices are still needed for: ${b.unknown.map(x=>escapeHTML(x.label)).join(', ')}. These are not counted as ₹0.</p>`:`<p style="color:#9fe3b1">All listed components have a reference price. Check the seller listing before buying.</p>`}
+ <p style="color:#9eb4c9;font-size:13px">Price references were checked on 20 Oct 2026. They are listing prices and can change. The listed resistor, LED, diode and transistor values are divided from seller pack prices; some are reference parts because the project does not specify exact ratings. Shipping and checkout changes are not included. For an exact bill of materials, specify component model, rating and quantity.</p>`;
+}
+function openProject(id){
+ const p=data.find(x=>x.id===id); if(p) openCustom(p);
+}
+function openCustom(p){
+ document.getElementById("modalContent").innerHTML=`
+ <h2>${escapeHTML(p.icon)} ${escapeHTML(p.name)}</h2>
+ <p>${escapeHTML(p.description)}</p>
+ <div class="detailGrid">
+ <div class="detail"><strong>Category</strong>${escapeHTML(p.category)}</div>
+ <div class="detail"><strong>Difficulty</strong>${escapeHTML(p.difficulty)}</div>
+ <div class="detail"><strong>Estimated Component Cost</strong>${p.cost}</div>
+ <div class="detail"><strong>Components</strong>${escapeHTML(p.components)}</div>
+ </div>
+ ${renderCostBreakdown(p.components)}
+ 
+ <h3>⚙️ Working / Principle</h3><p>${escapeHTML(p.working)}</p>
+ <h3>🛠️ Build Steps</h3><p>${escapeHTML(p.steps)}</p>
+ <h3>🎯 Applications</h3><p>${escapeHTML(p.applications)}</p>
+ <h3>💻 Sample Code</h3>
+ <pre id="codeBox">${makeCode(p)}</pre>
+ <button onclick="copyCode()">📋 Copy Code</button>`;
+ document.getElementById("modal").style.display="block";
+}
+function makeCode(p){
+ const n=p.name.toLowerCase();
+ if(n.includes("arduino")||n.includes("led")||n.includes("sensor")||n.includes("fan")||n.includes("temperature")||n.includes("servo"))
+ return `// Educational starter code for ${p.name}
+void setup() {
+  Serial.begin(9600);
+  pinMode(LED_BUILTIN, OUTPUT);
+}
+void loop() {
+  digitalWrite(LED_BUILTIN, HIGH);
+  delay(500);
+  digitalWrite(LED_BUILTIN, LOW);
+  delay(500);
+}`;
+ return `// Project: ${p.name}
+// Use this as a starting point and adapt it to your selected hardware.
+void setup() {
+  Serial.begin(9600);
+}
+void loop() {
+  Serial.println("Electronic Project Inventor");
+  delay(1000);
+}`;
+}
+function copyCode(){
+ const text=document.getElementById("codeBox").innerText;
+ navigator.clipboard.writeText(text).then(()=>alert("Code copied!")).catch(()=>{
+   const t=document.createElement("textarea");t.value=text;document.body.appendChild(t);t.select();document.execCommand("copy");t.remove();alert("Code copied!");
+ });
+}
+function closeModal(){document.getElementById("modal").style.display="none";}
+window.onclick=e=>{if(e.target===document.getElementById("modal"))closeModal();}
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal();});
+document.getElementById("searchBox").addEventListener("input",render);
+init();
+</script>
+</body>
+</html>
